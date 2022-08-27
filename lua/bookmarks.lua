@@ -14,6 +14,12 @@
     gbw for "bookmark write"
 ]]
 
+
+local function echo(msg)
+    vim.api.nvim_echo({{msg}}, false, {})
+end
+
+
 local bookmarks = {}
 
 local bmks_location = vim.fs.normalize(vim.fn.stdpath("data"))
@@ -31,7 +37,7 @@ local function ensure_file(file_name, file_dir)
 
     if vim.fn.findfile(file_name, file_dir) == "" then
         if vim.fn.writefile({}, file_path) == -1 then
-            vim.notify(
+            echo(
                 string.format(
                     "Unable to create the file '%s' at %s.",
                     file_name, file_path
@@ -52,7 +58,7 @@ local function ensure_folder(folder_name, folder_dir)
 
     if vim.fn.finddir(folder_name, folder_dir) == "" then
         if vim.fn.mkdir(folder_path) == 0 then
-            vim.notify(
+            echo(
                 string.format(
                     "Unable to create the folder '%s' at %s.",
                     folder_name, folder_path
@@ -71,7 +77,7 @@ local function collect_bookmarks()
     local bmks_file = io.open(bmks_file_path)
 
     if not bmks_file then
-        vim.notify(
+        echo(
             string.format(
                 "Unable to read from the bookmarks file at %s.",
                 bmks_file_path
@@ -102,7 +108,7 @@ local function store_bookmarks(path)
     local bmks_file = io.open(path, "w+")
 
     if not bmks_file then
-        vim.notify(
+        echo(
             string.format(
                 "Unable to write to the bookmarks file at %s.",
                 bmks_file_path
@@ -116,7 +122,7 @@ local function store_bookmarks(path)
         local file, error = bmks_file:write(string.format("%s|%s\n", k, v))
 
         if not file then
-            vim.notify(
+            echo(
                 string.format(
                     "Error when writing bookmark '%s': %s.",
                     k, error
@@ -132,41 +138,9 @@ local function store_bookmarks(path)
     return true
 end
 
-
-local function make_bookmark()
-    local bookmark_name = vim.fn.input(
-        "Bookmark name (leave empty to use the current file's name): "
-    )
-
-    if bookmark_name == "" then
-        bookmark_name = vim.fn.expand("%:t:r")
-    end
-
-    local overriden = false
-    if bookmarks[bookmark_name] then
-        local choice = vim.fn.confirm(
-            string.format(
-                "Bookmark '%s' already exists. Override it? [Default: Yes]",
-                bookmark_name
-            ),
-            "&Yes\n&No", 1
-        )
-
-        if choice ~= 1 then
-            return
-        end
-
-        overriden = true
-    end
-
-    local bookmark_path = vim.fs.normalize(vim.fn.expand("%:p"))
-    bookmarks[bookmark_name] = bookmark_path
-
-    local action = overriden and "overriden" or "made"
-    vim.notify(string.format("Bookmark '%s' was %s!", bookmark_name, action))
-end
-
-local function list_bookmarks(verbose)
+-- Returns a formatted, unix-like ls style list of bookmarks in columns, or an
+-- unidirectional list with paths if verbose is true.
+local function get_bookmark_list(verbose)
     do
         local count = 0
         for _ in pairs(bookmarks) do
@@ -174,8 +148,7 @@ local function list_bookmarks(verbose)
         end
 
         if count == 0 then
-            vim.notify("No bookmarks found.")
-            return
+            return "No bookmarks found."
         end
     end
 
@@ -192,9 +165,7 @@ local function list_bookmarks(verbose)
             )
         end
 
-        vim.notify(bookmarks_str)
-
-        return
+        return bookmarks_str
     end
 
     local row_amount = math.ceil(#bookmarks / 4)
@@ -266,14 +237,55 @@ local function list_bookmarks(verbose)
         end
     end
 
-    vim.notify(bookmarks_str)
+    return bookmarks_str
+end
+
+
+local function make_bookmark()
+    local bookmark_name = vim.fn.input(
+        get_bookmark_list(false)
+        .. "\nBookmark name (leave empty to use the current file's name): "
+    )
+
+    if bookmark_name == "" then
+        bookmark_name = vim.fn.expand("%:t:r")
+    end
+
+    local overriden = false
+    if bookmarks[bookmark_name] then
+        local choice = vim.fn.confirm(
+            string.format(
+                "Bookmark '%s' already exists. Override it? [Default: Yes]",
+                bookmark_name
+            ),
+            "&Yes\n&No", 1
+        )
+
+        if choice ~= 1 then
+            return
+        end
+
+        overriden = true
+    end
+
+    local bookmark_path = vim.fs.normalize(vim.fn.expand("%:p"))
+    bookmarks[bookmark_name] = bookmark_path
+
+    local action = overriden and "overriden" or "made"
+    echo(string.format("Bookmark '%s' was %s!", bookmark_name, action))
+end
+
+local function list_bookmarks(verbose)
+    echo(get_bookmark_list(verbose))
 end
 
 local function goto_bookmark(method)
-    local target_bookmark = vim.fn.input("Target bookmark: ")
+    local target_bookmark = vim.fn.input(
+        get_bookmark_list(false) .. "\nTarget bookmark: "
+    )
 
     if not bookmarks[target_bookmark] then
-        vim.notify(string.format("Invalid bookmark '%s'.", target_bookmark))
+        echo(string.format("Invalid bookmark '%s'.", target_bookmark))
         return
     end
 
@@ -289,16 +301,18 @@ local function goto_bookmark(method)
 end
 
 local function delete_bookmark()
-    local target_bookmark = vim.fn.input("Target bookmark: ")
+    local target_bookmark = vim.fn.input(
+        get_bookmark_list(false) .. "\nTarget bookmark: "
+    )
 
     if not bookmarks[target_bookmark] then
-        vim.notify(string.format("Invalid bookmark '%s'.", target_bookmark))
+        echo(string.format("Invalid bookmark '%s'.", target_bookmark))
         return
     end
 
     bookmarks[target_bookmark] = nil
 
-    vim.notify(string.format("Bookmark '%s' deleted!", target_bookmark))
+    echo(string.format("Bookmark '%s' deleted!", target_bookmark))
 end
 
 local function backup_bookmarks()
@@ -309,7 +323,7 @@ local function backup_bookmarks()
         return
     end
 
-    vim.notify(
+    echo(
         string.format(
             "Bookmarks backup file '%s' was created at %s.",
             backup_file_name, backup_file_path
@@ -333,7 +347,7 @@ local function reset_bookmarks()
     bookmarks = {}
     store_bookmarks(bmks_file_path)
 
-    vim.notify("Bookmarks were reset!")
+    echo("Bookmarks were reset!")
 end
 
 local function write_bookmarks()
@@ -341,7 +355,7 @@ local function write_bookmarks()
         return
     end
 
-    vim.notify("Written to the bookmarks file!")
+    echo("Written to the bookmarks file!")
 end
 
 
