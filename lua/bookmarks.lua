@@ -9,7 +9,7 @@
     gbL for "bookmark List/Look" (verbose)
     gbd for "bookmark delete"
     gbb for "bookmark backup"
-    TODO: gbB for "bookmark Backup" (delete old backups before backing up)
+    gbB for "bookmark Backup" (delete old backups before backing up)
     gbR for "bookmark Reset"
     gbw for "bookmark write"
 ]]
@@ -331,6 +331,27 @@ local function backup_bookmarks()
     )
 end
 
+local function overwrite_backups()
+    for f, t in vim.fs.dir(backup_folder_path) do
+        local path = backup_folder_path .. "/" .. f
+        vim.notify(path)
+        if t == "file" then
+            if vim.fn.delete(path) == -1 then
+                vim.notify(
+                    string.format(
+                        "Error while trying to delete file '%s'.",
+                        path
+                    )
+                )
+            end
+        end
+    end
+
+    backup_bookmarks()
+
+    vim.notify(string.format("Bookmarks overwritten."))
+end
+
 local function reset_bookmarks()
     local choice = vim.fn.confirm(
         "Are you sure you want to reset your bookmarks?"
@@ -367,6 +388,7 @@ collect_bookmarks()
 vim.keymap.set("n", "gbm", make_bookmark)
 vim.keymap.set("n", "gbd", delete_bookmark)
 vim.keymap.set("n", "gbb", backup_bookmarks)
+vim.keymap.set("n", "gbB", overwrite_backups)
 vim.keymap.set("n", "gbR", reset_bookmarks)
 vim.keymap.set("n", "gbw", write_bookmarks)
 
