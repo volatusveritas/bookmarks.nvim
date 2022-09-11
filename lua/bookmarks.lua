@@ -30,6 +30,12 @@ local backup_folder_name = bmks_file_name .. "_backups"
 local bmks_file_path = bmks_location .. "/" .. bmks_file_name
 local backup_folder_path = bmks_location .. "/" .. backup_folder_name
 
+-- Removes beginning and ending spaces from a string.
+-- Credit to https://gist.github.com/ram-nadella/dd067dfeb3c798299e8d
+function trim(s)
+    return (string.gsub(s, "^%s*(.-)%s*$", "%1"))
+end
+
 -- Checks if a file exists. If it doesn't, creates it.
 -- Returns false if creation fails, true otherwise.
 local function ensure_file(file_name, file_dir)
@@ -247,8 +253,13 @@ local function make_bookmark()
         .. "\nBookmark name (leave empty to use the current file's name): "
     )
 
-    if bookmark_name == "" then
+    if trim(bookmark_name) == "" then
         bookmark_name = vim.fn.expand("%:t:r")
+
+        if bookmark_name == "" then
+            echo("Empty bookmark name provided. Operation aborted.")
+            return
+        end
     end
 
     local overriden = false
