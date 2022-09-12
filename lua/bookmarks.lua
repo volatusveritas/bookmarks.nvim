@@ -233,15 +233,15 @@ end
 local function make_bookmark()
     local file_name = vim.fn.expand("%:t:r")
 
-    local bookmark_name = vim.fn.input(
+    local bookmark_name = trim(vim.fn.input(
         get_bookmark_list(false)
         .. string.format(
             "\nBookmark name (leave empty to use '%s' as the name): ",
             file_name
         )
-    )
+    ))
 
-    if trim(bookmark_name) == "" then
+    if bookmark_name == "" then
         bookmark_name = file_name
 
         if bookmark_name == "" then
