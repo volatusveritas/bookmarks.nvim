@@ -274,9 +274,16 @@ local function list_bookmarks(verbose)
 end
 
 local function goto_bookmark(method)
-    local target_bookmark = vim.fn.input(
-        get_bookmark_list(false) .. "\nTarget bookmark: "
+    local target_bookmark = trim(
+        vim.fn.input(
+            get_bookmark_list(false) .. "\nTarget bookmark: "
+        )
     )
+
+    if target_bookmark == "" then
+        echo("Empty bookmark name provided. Operation aborted.")
+        return
+    end
 
     if not bookmarks[target_bookmark] then
         echo(string.format("Invalid bookmark '%s'.", target_bookmark))
