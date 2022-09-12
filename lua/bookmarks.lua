@@ -1,20 +1,3 @@
---[[
-    [ Default Keybindings ]
-    gbg for "bookmark go [abuf]"
-    gbx for "bookmark [go] split"
-    gbv for "bookmark [go] vsplit"
-    gbt for "bookmark [go] tab"
-    gbm for "bookmark make"
-    gbl for "bookmark list/look"
-    gbL for "bookmark List/Look" (verbose)
-    gbd for "bookmark delete"
-    gbb for "bookmark backup"
-    gbB for "bookmark Backup" (delete old backups before backing up)
-    gbR for "bookmark Reset"
-    gbw for "bookmark write"
-]]
-
-
 local function echo(msg)
     vim.api.nvim_echo({{msg}}, false, {})
 end
@@ -32,7 +15,7 @@ local backup_folder_path = bmks_location .. "/" .. backup_folder_name
 
 -- Removes beginning and ending spaces from a string.
 -- Credit to https://gist.github.com/ram-nadella/dd067dfeb3c798299e8d
-function trim(s)
+local function trim(s)
     return (string.gsub(s, "^%s*(.-)%s*$", "%1"))
 end
 
