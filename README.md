@@ -11,10 +11,11 @@ it becomes a problem when the number scales up, so I present you **Bookmarks**.
 Bookmarks is a Neovim plugin that allows you to create named bookmarks for
 files and go back to them using their name (even between sessions).
 
-🌟 Works out of the box: No dependencies.
-🌟 Lightweight: single file, simple structure, no bloat.
-🌟 Intuitive, mnemonic approach to keybindings.
-🌟 Less overhead for your brain; let your computer remember file paths for you.
+- 🌟 Works out of the box: No dependencies.
+- 🌟 Lightweight: single file, simple structure, no bloat.
+- 🌟 Intuitive, mnemonic approach to keybindings.
+- 🌟 Less overhead for your brain; let your computer remember file paths for
+  you.
 
 <p align="center">
     <img
