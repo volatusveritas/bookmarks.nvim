@@ -16,7 +16,12 @@ files and go back to them using their name (even between sessions).
 🌟 Intuitive, mnemonic approach to keybindings.
 🌟 Less overhead for your brain; let your computer remember file paths for you.
 
-<img src="img/bookmarks-nvim-showcase.gif" alt="A showcase of bookmarks.nvim" align="center">
+<p align="center">
+    <img
+        src="img/bookmarks-nvim-showcase.gif"
+        alt="A showcase of bookmarks.nvim"
+    >
+</p>
 
 ## Getting Started
 
