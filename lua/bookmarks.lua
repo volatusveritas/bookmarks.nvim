@@ -231,13 +231,18 @@ end
 
 
 local function make_bookmark()
+    local file_name = vim.fn.expand("%:t:r")
+
     local bookmark_name = vim.fn.input(
         get_bookmark_list(false)
-        .. "\nBookmark name (leave empty to use the current file's name): "
+        .. string.format(
+            "\nBookmark name (leave empty to use '%s' as the name): ",
+            file_name
+        )
     )
 
     if trim(bookmark_name) == "" then
-        bookmark_name = vim.fn.expand("%:t:r")
+        bookmark_name = file_name
 
         if bookmark_name == "" then
             echo("Empty bookmark name provided. Operation aborted.")
