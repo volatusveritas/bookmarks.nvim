@@ -11,7 +11,7 @@ it becomes a problem when the number scales up, so I present you **Bookmarks**.
 Bookmarks is a Neovim plugin that allows you to create named bookmarks for
 files and go back to them using their name (even between sessions).
 
-- 🌟 Works out of the box: No dependencies.
+- 🌟 Works out of the box: no dependencies.
 - 🌟 Lightweight: single file, simple structure, no bloat.
 - 🌟 Intuitive, mnemonic approach to keybindings.
 - 🌟 Less overhead for your brain; let your computer remember file paths for
@@ -52,7 +52,7 @@ lua << EOF
 EOF
 ```
 
-## Default Keybindings
+## Keybindings
 
 - `gbg` for "bookmark go": prompts the user to jump to a bookmark by its name.
 - `gbx` for "bookmark go split": same as "bookmarks go", but opens the bookmark
@@ -75,5 +75,5 @@ EOF
 - `gbw` for "bookmark write": writes the current state of bookmarks to the
   bookmarks file.
 
-Note: Bookmarks runs "bookmark write" when exiting, so you won't lose your
-bookmarks when exiting.
+> Note: Bookmarks runs "bookmark write" when exiting, so you won't lose your
+  bookmarks when leaving.
