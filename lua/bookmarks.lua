@@ -13,13 +13,19 @@ local backup_folder_name = bmks_file_name .. "_backups"
 local bmks_file_path = bmks_location .. "/" .. bmks_file_name
 local backup_folder_path = bmks_location .. "/" .. backup_folder_name
 
--- Removes beginning and ending spaces from a string.
+
+
+-------------------------------
+--    Auxiliary Functions    --
+-------------------------------
+
+-- Returns the passed string s without leading or trailing whitespace.
 -- Credit to https://gist.github.com/ram-nadella/dd067dfeb3c798299e8d
 local function trim(s)
     return (string.gsub(s, "^%s*(.-)%s*$", "%1"))
 end
 
--- Checks if a file exists. If it doesn't, creates it.
+-- Returns true if a file exists. If it doesn't, creates it.
 -- Returns false if creation fails, true otherwise.
 local function ensure_file(file_name, file_dir)
     local file_path = file_dir .. "/" .. file_name
@@ -40,7 +46,7 @@ local function ensure_file(file_name, file_dir)
     return true
 end
 
--- Checks if a folder exists. If it doesn't, creates it.
+-- Returns true if a folder exists. If it doesn't, creates it.
 -- Returns false if creation fails, true otherwise.
 local function ensure_folder(folder_name, folder_dir)
     local folder_path = folder_dir .. "/" .. folder_name
@@ -61,7 +67,8 @@ local function ensure_folder(folder_name, folder_dir)
     return true
 end
 
--- Collects bookmarks from the bookmarks file.
+-- Collects bookmarks from the bookmarks file, overriding the bookmark list.
+-- Returns false if file can't be read, true otherwise.
 local function collect_bookmarks()
     local bmks_file = io.open(bmks_file_path)
 
@@ -91,9 +98,11 @@ local function collect_bookmarks()
     end
 
     bmks_file:close()
+
+    return true
 end
 
--- Stores bookmarks in the bookmarks file.
+-- Stores bookmarks from the bookmark list in the bookmarks file.
 -- Returns false if file can't be written to, true otherwise.
 local function store_bookmarks(path)
     local bmks_file = io.open(path, "w+")
@@ -129,7 +138,7 @@ local function store_bookmarks(path)
     return true
 end
 
--- Returns a formatted, unix-like ls style list of bookmarks in columns, or an
+-- Returns a formatted string, unix-ls style list of bookmarks in columns, or a
 -- unidirectional list with paths if verbose is true.
 local function get_bookmark_list(verbose)
     do
@@ -232,6 +241,12 @@ local function get_bookmark_list(verbose)
 end
 
 
+
+----------------------------------
+--    Interaction Functions     --
+----------------------------------
+
+-- Promps the creation of a new bookmark set to the current file.
 local function make_bookmark()
     local file_name = vim.fn.expand("%:t:r")
 
@@ -276,10 +291,12 @@ local function make_bookmark()
     echo(string.format("Bookmark '%s' was %s!", bookmark_name, action))
 end
 
+-- Lists the available bookmarks from the bookmark list.
 local function list_bookmarks(verbose)
     echo(get_bookmark_list(verbose))
 end
 
+-- Jumps to a bookmark by its name.
 local function goto_bookmark(method)
     local target_bookmark = trim(
         vim.fn.input(
@@ -308,6 +325,7 @@ local function goto_bookmark(method)
     end
 end
 
+-- Deletes a bookmark from the bookmark list.
 local function delete_bookmark()
     local target_bookmark = vim.fn.input(
         get_bookmark_list(false) .. "\nTarget bookmark: "
@@ -323,9 +341,15 @@ local function delete_bookmark()
     echo(string.format("Bookmark '%s' deleted!", target_bookmark))
 end
 
+-- Writes the bookmarks to the bookmarks file and makes a new backup in the
+-- backups folder.
 local function backup_bookmarks()
     local backup_file_name = bmks_file_name .. "_" .. vim.fn.localtime()
     local backup_file_path = backup_folder_path .. "/" .. backup_file_name
+
+    if not store_bookmarks(bmks_file_path) then
+        return
+    end
 
     if not store_bookmarks(backup_file_path) then
         return
@@ -339,6 +363,7 @@ local function backup_bookmarks()
     )
 end
 
+-- Deletes all backups from the backups folder, then makes a new backup.
 local function overwrite_backups()
     for f, t in vim.fs.dir(backup_folder_path) do
         local path = backup_folder_path .. "/" .. f
@@ -360,6 +385,8 @@ local function overwrite_backups()
     vim.notify(string.format("Bookmarks overwritten."))
 end
 
+-- Prompts the reset of the bookmarks and the bookmarks file (doesn't affect
+-- backups).
 local function reset_bookmarks()
     local choice = vim.fn.confirm(
         "Are you sure you want to reset your bookmarks?"
@@ -379,6 +406,7 @@ local function reset_bookmarks()
     echo("Bookmarks were reset!")
 end
 
+-- Recollects bookmarks from the bookmarks file.
 local function reload_bookmarks()
     if collect_bookmarks() then
         return
@@ -387,6 +415,7 @@ local function reload_bookmarks()
     end
 end
 
+-- Writes the bookmarks to the bookmarks file.
 local function write_bookmarks()
     if not store_bookmarks(bmks_file_path) then
         return
@@ -395,6 +424,11 @@ local function write_bookmarks()
     echo("Written to the bookmarks file!")
 end
 
+
+
+---------------------------
+--    On-require code    --
+---------------------------
 
 ensure_file(bmks_file_name, bmks_location)
 ensure_folder(backup_folder_name, bmks_location)
