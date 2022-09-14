@@ -73,8 +73,10 @@ local function collect_bookmarks()
             )
         )
 
-        return
+        return false
     end
+
+    bookmarks = {}
 
     local next_line = bmks_file:read()
     while next_line do
@@ -377,6 +379,14 @@ local function reset_bookmarks()
     echo("Bookmarks were reset!")
 end
 
+local function reload_bookmarks()
+    if collect_bookmarks() then
+        return
+    else
+        echo("Reloaded bookmarks!")
+    end
+end
+
 local function write_bookmarks()
     if not store_bookmarks(bmks_file_path) then
         return
@@ -396,6 +406,7 @@ vim.keymap.set("n", "gbd", delete_bookmark)
 vim.keymap.set("n", "gbb", backup_bookmarks)
 vim.keymap.set("n", "gbB", overwrite_backups)
 vim.keymap.set("n", "gbR", reset_bookmarks)
+vim.keymap.set("n", "gbr", reload_bookmarks)
 vim.keymap.set("n", "gbw", write_bookmarks)
 
 vim.keymap.set("n", "gbg", function() goto_bookmark("abuf") end)

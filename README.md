@@ -70,6 +70,8 @@ EOF
   registered bookmarks.
 - `gbB` for "bookmark Backup": same as "bookmark backup" but deletes old
   backups before backing up.
+- `gbr` for "bookmark reload": resets the bookmark list and loads it again from
+  the bookmarks file.
 - `gbR` for "bookmark Reset": resets the current list of bookmarks (you may
   want to "bookmark backup" before doing this).
 - `gbw` for "bookmark write": writes the current state of bookmarks to the
