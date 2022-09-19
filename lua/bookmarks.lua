@@ -1,3 +1,7 @@
+---------------------------
+--    Local Variables    --
+---------------------------
+
 local bookmarks = {}
 
 local bmks_location = vim.fs.normalize(vim.fn.stdpath("data"))
@@ -9,12 +13,20 @@ local bmks_file_path = bmks_location .. "/" .. bmks_file_name
 local backup_folder_path = bmks_location .. "/" .. backup_folder_name
 
 
+----------------------------
+--    Highlight Groups    --
+----------------------------
+
+vim.api.nvim_create_autocmd(
+    "ColorScheme", {
+        command = "highlight BookmarksNvimTitle gui=bold guifg=LightBlue"
+    }
+)
+
 
 -------------------------------
 --    Auxiliary Functions    --
 -------------------------------
-
-vim.cmd("highlight BookmarksNvimTitle guifg=LightBlue gui=bold")
 
 -- Echoes msg without writing to :messages.
 local function echo(msg)
