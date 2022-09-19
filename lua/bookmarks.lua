@@ -1,8 +1,3 @@
-local function echo(msg)
-    vim.api.nvim_echo({{msg}}, false, {})
-end
-
-
 local bookmarks = {}
 
 local bmks_location = vim.fs.normalize(vim.fn.stdpath("data"))
@@ -18,6 +13,16 @@ local backup_folder_path = bmks_location .. "/" .. backup_folder_name
 -------------------------------
 --    Auxiliary Functions    --
 -------------------------------
+
+vim.cmd("highlight BookmarksNvimTitle guifg=LightBlue gui=bold")
+
+-- Echoes msg without writing to :messages.
+local function echo(msg)
+    vim.api.nvim_echo(
+        { { "[bookmarks.nvim] ", "BookmarksNvimTitle" }, { msg } },
+        false, {}
+    )
+end
 
 -- Returns the passed string s without leading or trailing whitespace.
 -- Credit to https://gist.github.com/ram-nadella/dd067dfeb3c798299e8d
