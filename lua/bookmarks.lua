@@ -180,7 +180,7 @@ local function widget_update_extmarks()
             win_top - 1, 0,
             {
                 virt_text_pos = "overlay",
-                virt_text_win_col = vim.fn.winwidth(0) - 2,
+                virt_text_win_col = vim.fn.winwidth(0) - 1,
                 virt_text = {
                     { UPWARDS_ARROW, "PreProc" },
                 },
@@ -196,7 +196,7 @@ local function widget_update_extmarks()
             win_bottom - 1, 0,
             {
                 virt_text_pos = "overlay",
-                virt_text_win_col = vim.fn.winwidth(0) - 2,
+                virt_text_win_col = vim.fn.winwidth(0) - 1,
                 virt_text = {
                     { DOWNWARDS_ARROW, "PreProc" },
                 },
@@ -210,6 +210,18 @@ end
 -- conflicting editing options such as scrolloff).
 local function widget_listview_mode()
     vim.wo[widget_focus.win].scrolloff = 0
+
+    vim.api.nvim_create_autocmd("WinScrolled", {
+        group = bookmarks_augroup,
+        buffer = widget_focus.buf,
+        callback = function()
+            if preferences.listview_mode.reset_cursor_on_scroll then
+                vim.cmd("normal H0")
+            end
+
+            widget_update_extmarks()
+        end
+    })
 
     vim.keymap.set("n", "j", function()
         local win_top = vim.fn.getpos("w0")[2]
@@ -225,23 +237,9 @@ local function widget_listview_mode()
         end
 
         vim.cmd("normal! ")
-
-        if preferences.listview_mode.reset_cursor_on_scroll then
-            vim.cmd("normal H0")
-        end
-
-        widget_update_extmarks()
     end, { buffer = 0 })
 
-    vim.keymap.set("n", "k", function()
-        vim.cmd("normal! ")
-
-        if preferences.listview_mode.reset_cursor_on_scroll then
-            vim.cmd("normal H0")
-        end
-
-        widget_update_extmarks()
-    end, { buffer = 0 })
+    vim.keymap.set("n", "k", "<C-y>", { buffer = 0 })
 
     vim.keymap.set("n", "J", "j", { buffer = 0, noremap = true })
     vim.keymap.set("n", "K", "k", { buffer = 0, noremap = true })
