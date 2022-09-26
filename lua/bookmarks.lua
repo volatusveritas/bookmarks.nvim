@@ -45,9 +45,11 @@ vim.api.nvim_create_autocmd(
 --    Plugin UI    --
 ---------------------
 
--- TODO: Indicate if there are additional entries below or above.
 local DOWNWARDS_ARROW = "▼"
 local UPWARDS_ARROW = "▲"
+
+local downwards_arrow_extmark = nil
+local upwards_arrow_extmark = nil
 
 local widget_frame = {
     -- The handle for the current widget's window.
@@ -75,7 +77,10 @@ local preferences = {
             width = 80,
             height = 24
         }
-    }
+    },
+    listview_mode = {
+        reset_cursor_on_scroll = true,
+    },
 }
 
 
@@ -154,10 +159,58 @@ local function widget_close()
     vim.api.nvim_win_close(widget_frame.win, false)
 end
 
+local function widget_update_extmarks()
+    if upwards_arrow_extmark then
+        vim.api.nvim_buf_del_extmark(0, bookmarks_ns, upwards_arrow_extmark)
+    end
+    if downwards_arrow_extmark then
+        vim.api.nvim_buf_del_extmark(0, bookmarks_ns, downwards_arrow_extmark)
+    end
+
+    local win_top = vim.fn.getpos("w0")[2]
+    local win_bottom = win_top + vim.fn.winheight(widget_focus.win) - 1
+    local win_lines = #vim.api.nvim_buf_get_lines(
+        widget_focus.buf, 0, -1, false
+    )
+
+    if win_top > 1 then
+        -- More above
+        upwards_arrow_extmark = vim.api.nvim_buf_set_extmark(
+            0, bookmarks_ns,
+            win_top - 1, 0,
+            {
+                virt_text_pos = "overlay",
+                virt_text_win_col = vim.fn.winwidth(0) - 2,
+                virt_text = {
+                    { UPWARDS_ARROW, "PreProc" },
+                },
+                strict = false,
+            }
+        )
+    end
+
+    if win_bottom < win_lines - 1 then
+        -- More below
+        downwards_arrow_extmark = vim.api.nvim_buf_set_extmark(
+            0, bookmarks_ns,
+            win_bottom - 1, 0,
+            {
+                virt_text_pos = "overlay",
+                virt_text_win_col = vim.fn.winwidth(0) - 2,
+                virt_text = {
+                    { DOWNWARDS_ARROW, "PreProc" },
+                },
+                strict = false,
+            }
+        )
+    end
+end
+
+-- Enables listview mode (maps j/k to screen scrolling, disables normal
+-- conflicting editing options such as scrolloff).
 local function widget_listview_mode()
     vim.wo[widget_focus.win].scrolloff = 0
 
-    -- TODO: Create an autocmd to drag the cursor to top when scrolling
     vim.keymap.set("n", "j", function()
         local win_top = vim.fn.getpos("w0")[2]
         local win_lines = #vim.api.nvim_buf_get_lines(
@@ -172,10 +225,28 @@ local function widget_listview_mode()
         end
 
         vim.cmd("normal! ")
+
+        if preferences.listview_mode.reset_cursor_on_scroll then
+            vim.cmd("normal H0")
+        end
+
+        widget_update_extmarks()
+    end, { buffer = 0 })
+
+    vim.keymap.set("n", "k", function()
+        vim.cmd("normal! ")
+
+        if preferences.listview_mode.reset_cursor_on_scroll then
+            vim.cmd("normal H0")
+        end
+
+        widget_update_extmarks()
     end, { buffer = 0 })
 
     vim.keymap.set("n", "J", "j", { buffer = 0, noremap = true })
     vim.keymap.set("n", "K", "k", { buffer = 0, noremap = true })
+
+    widget_update_extmarks()
 end
 
 -- Creates the widget frame with a title.
@@ -477,13 +548,6 @@ local function list_bookmarks(verbose)
         widget_cursor_reset(widget_focus)
         widget_listview_mode()
 
-        widget_write_lines(widget_focus, { "", "End of the list." })
-        widget_center_line(widget_focus, widget_focus.next_line - 1)
-        vim.api.nvim_buf_add_highlight(
-            widget_focus.buf, bookmarks_ns, "BookmarksNvimSubtitle",
-            widget_focus.next_line - 2, 0, -1
-        )
-
         return
     end
 
@@ -585,14 +649,6 @@ local function list_bookmarks(verbose)
             lnum, 0, -1
         )
     end
-
-    -- TODO: Block user from creating a bookmark with this name.
-    widget_write_lines(widget_focus, { "", "End of the list." })
-    widget_center_line(widget_focus, widget_focus.next_line - 1)
-    vim.api.nvim_buf_add_highlight(
-        widget_focus.buf, bookmarks_ns, "BookmarksNvimSubtitle",
-        widget_focus.next_line - 2, 0, -1
-    )
 
     vim.bo[widget_focus.buf].modifiable = false
 
@@ -711,7 +767,7 @@ end
 
 -- Recollects bookmarks from the bookmarks file.
 local function reload_bookmarks()
-    if collect_bookmarks() then
+    if not collect_bookmarks() then
         return
     else
         echo("Reloaded bookmarks!")
@@ -763,4 +819,5 @@ vim.api.nvim_create_autocmd(
     }
 )
 
--- TODO: Add bookmark renaming functionality
+-- TODO: Add bookmark renaming functionality (gbc "bookmark change"?)
+-- TODO: Add a way to recover a backup from withing Neovim (gbf "bookmark fetch"?)
