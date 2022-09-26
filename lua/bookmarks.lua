@@ -625,7 +625,7 @@ local function list_bookmarks(verbose)
         table.insert(bookmark_lines, bookmarks_line)
     end
 
-    if max_line + (column_amount - 1) * division > vim.fn.winwidth(0) then
+    if max_line + (column_amount - 1) * #division > vim.fn.winwidth(0) then
     end
 
     local first_line = widget_focus.next_line
