@@ -625,11 +625,14 @@ local function list_bookmarks(verbose)
         table.insert(bookmark_lines, bookmarks_line)
     end
 
+    if max_line + (column_amount - 1) * division > vim.fn.winwidth(0) then
+    end
+
     local first_line = widget_focus.next_line
     widget_write_lines(widget_focus, bookmark_lines)
 
     local centering_padding = string.rep(
-        " ", math.ceil((vim.fn.winwidth(widget_focus.win) - max_line) / 2)
+        " ", math.ceil((vim.fn.winwidth(0) - max_line) / 2)
     )
 
     -- TODO: Reduce the number of columns (min. 1) if it doesn't fit
@@ -687,7 +690,7 @@ end
 -- Deletes a bookmark from the bookmark list.
 local function delete_bookmark()
     local target_bookmark = vim.fn.input(
-        get_bookmark_list(false) .. "\nTarget bookmark: "
+        "Target bookmark: "
     )
 
     if not bookmarks[target_bookmark] then
