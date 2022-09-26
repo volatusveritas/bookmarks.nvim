@@ -196,9 +196,9 @@ local function create_widget_frame(widget_name)
     widget_write_lines(widget_frame, {
         "[bookmarks.nvim] " .. widget_name,
         "",
-        "Press [q] or [Esc] to close this window.",
-        "Press [j]/[k] to scroll down/up the item list.",
-        "Press [J]/[K] for the normal behavior of [j]/[k].",
+        "[q], [Esc] -- close this window.",
+        "[j]/[k] -- scroll down/up the item list.",
+        "[J]/[K] -- normal behavior of [j]/[k].",
         ""
     })
     vim.api.nvim_buf_add_highlight(
@@ -476,6 +476,13 @@ local function list_bookmarks(verbose)
 
         widget_cursor_reset(widget_focus)
         widget_listview_mode()
+
+        widget_write_lines(widget_focus, { "", "End of the list." })
+        widget_center_line(widget_focus, widget_focus.next_line - 1)
+        vim.api.nvim_buf_add_highlight(
+            widget_focus.buf, bookmarks_ns, "BookmarksNvimSubtitle",
+            widget_focus.next_line - 2, 0, -1
+        )
 
         return
     end
