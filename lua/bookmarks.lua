@@ -1,3 +1,5 @@
+local M = {}
+
 ----------------------------------
 --    Local-global Variables    --
 ----------------------------------
@@ -69,8 +71,6 @@ local widget_focus = {
     next_line = 1 -- 1-based index
 }
 
--- Reserved for bookmarks.nvim's future configuration capabilities.
--- TODO: Add a way to configure bookmarks.nvim.
 local preferences = {
     widget = {
         size = {
@@ -80,6 +80,7 @@ local preferences = {
     },
     listview_mode = {
         reset_cursor_on_scroll = true,
+        on_scroll_cursor_movement = "H0",
     },
 }
 
@@ -216,7 +217,10 @@ local function widget_listview_mode()
         buffer = widget_focus.buf,
         callback = function()
             if preferences.listview_mode.reset_cursor_on_scroll then
-                vim.cmd("normal H0")
+                vim.cmd(
+                    "normal "
+                    .. preferences.listview_mode.on_scroll_cursor_movement
+                )
             end
 
             widget_update_extmarks()
@@ -539,7 +543,7 @@ local function list_bookmarks(verbose)
         for k, v in pairs(bookmarks) do
             widget_write_line(
                 widget_focus,
-                --[[string.rep(" ", 4) .. ]]k .. " -- " .. v
+                string.rep(" ", 4) .. k .. " -- " .. v
             )
         end
 
@@ -790,35 +794,39 @@ end
 --    On-require code    --
 ---------------------------
 
-ensure_file(bmks_file_name, bmks_location)
-ensure_folder(backups_folder_name, bmks_location)
-collect_bookmarks()
+function M.setup(user_preferences)
+    preferences = vim.tbl_deep_extend("force", preferences, user_preferences)
 
+    ensure_file(bmks_file_name, bmks_location)
+    ensure_folder(backups_folder_name, bmks_location)
+    collect_bookmarks()
 
-vim.keymap.set("n", "gbm", make_bookmark)
-vim.keymap.set("n", "gbd", delete_bookmark)
-vim.keymap.set("n", "gbb", backup_bookmarks)
-vim.keymap.set("n", "gbB", overwrite_backups)
-vim.keymap.set("n", "gbR", reset_bookmarks)
-vim.keymap.set("n", "gbr", reload_bookmarks)
-vim.keymap.set("n", "gbw", write_bookmarks)
+    vim.keymap.set("n", "gbm", make_bookmark)
+    vim.keymap.set("n", "gbd", delete_bookmark)
+    vim.keymap.set("n", "gbb", backup_bookmarks)
+    vim.keymap.set("n", "gbB", overwrite_backups)
+    vim.keymap.set("n", "gbR", reset_bookmarks)
+    vim.keymap.set("n", "gbr", reload_bookmarks)
+    vim.keymap.set("n", "gbw", write_bookmarks)
 
-vim.keymap.set("n", "gbg", function() goto_bookmark("abuf") end)
-vim.keymap.set("n", "gbx", function() goto_bookmark("horizontal") end)
-vim.keymap.set("n", "gbv", function() goto_bookmark("vertical") end)
-vim.keymap.set("n", "gbt", function() goto_bookmark("tab") end)
+    vim.keymap.set("n", "gbg", function() goto_bookmark("abuf") end)
+    vim.keymap.set("n", "gbx", function() goto_bookmark("horizontal") end)
+    vim.keymap.set("n", "gbv", function() goto_bookmark("vertical") end)
+    vim.keymap.set("n", "gbt", function() goto_bookmark("tab") end)
 
-vim.keymap.set("n", "gbl", function() list_bookmarks(false) end)
-vim.keymap.set("n", "gbL", function() list_bookmarks(true) end)
+    vim.keymap.set("n", "gbl", function() list_bookmarks(false) end)
+    vim.keymap.set("n", "gbL", function() list_bookmarks(true) end)
 
-
-vim.api.nvim_create_autocmd(
-    "VimLeave",
-    {
-        group=bookmarks_augroup,
-        callback=function() store_bookmarks(bmks_file_path) end,
-    }
-)
+    vim.api.nvim_create_autocmd(
+        "VimLeave",
+        {
+            group=bookmarks_augroup,
+            callback=function() store_bookmarks(bmks_file_path) end,
+        }
+    )
+end
 
 -- TODO: Add bookmark renaming functionality (gbc "bookmark change"?)
 -- TODO: Add a way to recover a backup from withing Neovim (gbf "bookmark fetch"?)
+
+return M
