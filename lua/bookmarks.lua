@@ -61,7 +61,7 @@ local widget_frame = {
     -- The handle for the current widget's buffer.
     buf = nil,
     -- The next available line in the current widget window.
-    next_line = 1 -- 1-based index
+    next_line = 0 -- 0-based index
 }
 
 local widget_focus = {
@@ -70,7 +70,7 @@ local widget_focus = {
     -- The handle for the current widget's focused buffer.
     buf = nil,
     -- The next available line in the current widget's focused window.
-    next_line = 1 -- 1-based index
+    next_line = 0 -- 0-based index
 }
 
 local preferences = {
@@ -130,7 +130,7 @@ local function widget_write_lines(widget, lines)
     vim.bo[widget.buf].modifiable = true
 
     vim.api.nvim_buf_set_lines(
-        widget.buf, widget.next_line - 1, widget.next_line - 1, false, lines
+        widget.buf, widget.next_line, widget.next_line, false, lines
     )
 
     widget.next_line = widget.next_line + #lines
@@ -145,7 +145,7 @@ end
 
 -- Initializes a buffer and a window for a widget.
 local function widget_initialize(widget, win_opts)
-    widget.next_line = 1
+    widget.next_line = 0
 
     widget.buf = vim.api.nvim_create_buf(false, true)
     vim.bo[widget.buf].bufhidden = "wipe"
@@ -640,10 +640,9 @@ function M.list_bookmarks(verbose)
     )
 
     -- TODO: Reduce the number of columns (min. 1) if it doesn't fit
-    -- TODO: Follow api-indexing standard for widget_next_line
     vim.bo[widget_focus.buf].modifiable = true
 
-    for lnum = first_line - 1, widget_focus.next_line - 2 do
+    for lnum = first_line, widget_focus.next_line - 1 do
         vim.api.nvim_buf_set_text(
             widget_focus.buf,
             lnum, 0,
