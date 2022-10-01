@@ -73,15 +73,15 @@ local widget_focus = {
 
 local preferences = {
     widget = {
-        size = {
-            width = 80,
-            height = 24
-        }
+        width = 80,
+        height = 24
     },
     listview_mode = {
         reset_cursor_on_scroll = true,
         on_scroll_cursor_movement = "H0",
     },
+    default_keybindings = true,
+    save_on_exit = true,
 }
 
 
@@ -99,7 +99,7 @@ local function widget_center_lines(widget, lines)
         local center_padding = string.rep(
             " ", math.ceil(
                 (
-                    preferences.widget.size.width
+                    preferences.widget.width
                     - #vim.api.nvim_buf_get_lines(
                         widget.buf, lnum - 1, lnum, false
                     )[1]
@@ -257,10 +257,10 @@ local function create_widget_frame(widget_name)
 
     widget_initialize(widget_frame, {
         relative = "editor",
-        width = preferences.widget.size.width,
-        height = preferences.widget.size.height,
-        col = (vim.o.columns - preferences.widget.size.width) / 2,
-        row = (vim.o.lines - preferences.widget.size.height) / 2,
+        width = preferences.widget.width,
+        height = preferences.widget.height,
+        col = (vim.o.columns - preferences.widget.width) / 2,
+        row = (vim.o.lines - preferences.widget.height) / 2,
         style = "minimal",
         border = "rounded",
     })
@@ -304,10 +304,10 @@ local function create_widget_focus(
 
     widget_initialize(widget_focus, {
         relative = "editor",
-        width = preferences.widget.size.width - left_offset - right_offset,
-        height = preferences.widget.size.height - top_offset - bottom_offset,
-        col = (vim.o.columns - preferences.widget.size.width) / 2 + 1 + left_offset,
-        row = (vim.o.lines - preferences.widget.size.height) / 2 + 1 + top_offset,
+        width = preferences.widget.width - left_offset - right_offset,
+        height = preferences.widget.height - top_offset - bottom_offset,
+        col = (vim.o.columns - preferences.widget.width) / 2 + 1 + left_offset,
+        row = (vim.o.lines - preferences.widget.height) / 2 + 1 + top_offset,
         style = "minimal",
     })
 end
@@ -475,7 +475,7 @@ end
 ----------------------------------
 
 -- Promps the creation of a new bookmark set to the current file.
-local function make_bookmark()
+function M.make_bookmark()
     -- TODO: Make it so creating bkX when it exists creates bkX2.
     local file_name = vim.fn.expand("%:t:r")
 
@@ -521,7 +521,7 @@ end
 
 -- Displays unix-ls style list of bookmarks in columns, or a stacked list with
 -- paths if verbose is true.
-local function list_bookmarks(verbose)
+function M.list_bookmarks(verbose)
     create_widget("Bookmark List")
 
     do
@@ -663,7 +663,7 @@ local function list_bookmarks(verbose)
 end
 
 -- Jumps to a bookmark by its name.
-local function goto_bookmark(method)
+function M.goto_bookmark(method)
     local target_bookmark = trim(
         vim.fn.input("Target bookmark: ")
     )
@@ -690,7 +690,7 @@ local function goto_bookmark(method)
 end
 
 -- Deletes a bookmark from the bookmark list.
-local function delete_bookmark()
+function M.delete_bookmark()
     local target_bookmark = vim.fn.input(
         "Target bookmark: "
     )
@@ -707,7 +707,7 @@ end
 
 -- Writes the bookmarks to the bookmarks file and makes a new backup in the
 -- backups folder.
-local function backup_bookmarks()
+function M.backup_bookmarks()
     local backup_file_name = bmks_file_name .. "_" .. vim.fn.localtime()
     local backup_file_path = backups_folder_path .. "/" .. backup_file_name
 
@@ -728,7 +728,7 @@ local function backup_bookmarks()
 end
 
 -- Deletes all backups from the backups folder, then makes a new backup.
-local function overwrite_backups()
+function M.overwrite_backups()
     for f, t in vim.fs.dir(backups_folder_path) do
         local path = backups_folder_path .. "/" .. f
         vim.notify(path)
@@ -751,7 +751,7 @@ end
 
 -- Prompts the reset of the bookmarks and the bookmarks file (doesn't affect
 -- backups).
-local function reset_bookmarks()
+function M.reset_bookmarks()
     local choice = vim.fn.confirm(
         "Are you sure you want to reset your bookmarks?"
         .." You are going to lose ALL bookmarks."
@@ -771,7 +771,7 @@ local function reset_bookmarks()
 end
 
 -- Recollects bookmarks from the bookmarks file.
-local function reload_bookmarks()
+function M.reload_bookmarks()
     if not collect_bookmarks() then
         return
     else
@@ -780,7 +780,7 @@ local function reload_bookmarks()
 end
 
 -- Writes the bookmarks to the bookmarks file.
-local function write_bookmarks()
+function M.write_bookmarks()
     if not store_bookmarks(bmks_file_path) then
         return
     end
@@ -795,35 +795,41 @@ end
 ---------------------------
 
 function M.setup(user_preferences)
+    user_preferences = user_preferences or {}
+
     preferences = vim.tbl_deep_extend("force", preferences, user_preferences)
 
     ensure_file(bmks_file_name, bmks_location)
     ensure_folder(backups_folder_name, bmks_location)
     collect_bookmarks()
 
-    vim.keymap.set("n", "gbm", make_bookmark)
-    vim.keymap.set("n", "gbd", delete_bookmark)
-    vim.keymap.set("n", "gbb", backup_bookmarks)
-    vim.keymap.set("n", "gbB", overwrite_backups)
-    vim.keymap.set("n", "gbR", reset_bookmarks)
-    vim.keymap.set("n", "gbr", reload_bookmarks)
-    vim.keymap.set("n", "gbw", write_bookmarks)
+    if preferences.default_keybindings then
+        vim.keymap.set("n", "gbm", M.make_bookmark)
+        vim.keymap.set("n", "gbd", M.delete_bookmark)
+        vim.keymap.set("n", "gbb", M.backup_bookmarks)
+        vim.keymap.set("n", "gbB", M.overwrite_backups)
+        vim.keymap.set("n", "gbR", M.reset_bookmarks)
+        vim.keymap.set("n", "gbr", M.reload_bookmarks)
+        vim.keymap.set("n", "gbw", M.write_bookmarks)
 
-    vim.keymap.set("n", "gbg", function() goto_bookmark("abuf") end)
-    vim.keymap.set("n", "gbx", function() goto_bookmark("horizontal") end)
-    vim.keymap.set("n", "gbv", function() goto_bookmark("vertical") end)
-    vim.keymap.set("n", "gbt", function() goto_bookmark("tab") end)
+        vim.keymap.set("n", "gbg", function() M.goto_bookmark("abuf") end)
+        vim.keymap.set("n", "gbx", function() M.goto_bookmark("horizontal") end)
+        vim.keymap.set("n", "gbv", function() M.goto_bookmark("vertical") end)
+        vim.keymap.set("n", "gbt", function() M.goto_bookmark("tab") end)
 
-    vim.keymap.set("n", "gbl", function() list_bookmarks(false) end)
-    vim.keymap.set("n", "gbL", function() list_bookmarks(true) end)
+        vim.keymap.set("n", "gbl", function() M.list_bookmarks(false) end)
+        vim.keymap.set("n", "gbL", function() M.list_bookmarks(true) end)
+    end
 
-    vim.api.nvim_create_autocmd(
-        "VimLeave",
-        {
-            group=bookmarks_augroup,
-            callback=function() store_bookmarks(bmks_file_path) end,
-        }
-    )
+    if preferences.save_on_exit then
+        vim.api.nvim_create_autocmd(
+            "VimLeave",
+            {
+                group=bookmarks_augroup,
+                callback=function() store_bookmarks(bmks_file_path) end,
+            }
+        )
+    end
 end
 
 -- TODO: Add bookmark renaming functionality (gbc "bookmark change"?)
