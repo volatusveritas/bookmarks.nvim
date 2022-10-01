@@ -26,19 +26,21 @@ local bookmarks_ns = vim.api.nvim_create_namespace("bookmarks.nvim")
 --    Highlight Groups    --
 ----------------------------
 
+local function setup_highlights()
+    -- For the "[bookmarks.nvim]" message starting tag
+    vim.cmd("highlight BookmarksNvimTag gui=bold guifg=LightBlue")
+    -- For the widgets' titles
+    vim.cmd("highlight BookmarksNvimTitle gui=bold guifg=LightRed")
+    -- For the widget's subtitles
+    vim.cmd("highlight BookmarksNvimSubtitle guifg=Gray")
+    -- For the bookmarks' names
+    vim.cmd("highlight BookmarksNvimBookmark guifg=LightCyan")
+end
+
 vim.api.nvim_create_autocmd(
     "ColorScheme", {
         group = bookmarks_augroup,
-        callback = function()
-            -- For the "[bookmarks.nvim]" message starting tag
-            vim.cmd("highlight BookmarksNvimTag gui=bold guifg=LightBlue")
-            -- For the widgets' titles
-            vim.cmd("highlight BookmarksNvimTitle gui=bold guifg=LightRed")
-            -- For the widget's subtitles
-            vim.cmd("highlight BookmarksNvimSubtitle guifg=Gray")
-            -- For the bookmarks' names
-            vim.cmd("highlight BookmarksNvimBookmark guifg=LightCyan")
-        end,
+        callback = setup_highlights,
     }
 )
 
@@ -802,6 +804,7 @@ function M.setup(user_preferences)
     ensure_file(bmks_file_name, bmks_location)
     ensure_folder(backups_folder_name, bmks_location)
     collect_bookmarks()
+    setup_highlights()
 
     if preferences.default_keybindings then
         vim.keymap.set("n", "gbm", M.make_bookmark)
